@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>投票广场</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+        /* 基础样式优化 */
+        .layui-card {
+            border: 1px solid #f2f2f2;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .icon {
+            margin-right: 8px;
+            color: #1aa094;
+        }
+        .icon-cray {
+            color: #ffb800!important;
+        }
+        .icon-blue {
+            color: #1e9fff!important;
+        }
+        .icon-tip {
+            color: #ff5722!important;
+        }
+        .layui-bg-number {
+            background-color: #F8F8F8;
+        }
+
+        /* 投票卡片样式 */
+        .vote-item {
+            padding: 15px;
+            border-bottom: 1px dashed #eee;
+            transition: background-color 0.2s ease;
+        }
+        .vote-item:last-child {
+            border-bottom: none;
+        }
+        .vote-item:hover {
+            background-color: #fafafa;
+        }
+        .vote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .vote-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            max-width: 70%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .vote-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #fff;
+        }
+        .status-running {
+            background-color: #52c41a;
+        }
+        .status-ended {
+            background-color: #f5222d;
+        }
+        .vote-meta {
+            display: flex;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+            gap: 15px;
+        }
+        .vote-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vote-stats {
+            font-size: 12px;
+            color: #666;
+        }
+        .vote-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 快捷操作区样式 */
+        .quick-ops {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* 统计卡片样式 */
+        .stat-card {
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin: 8px 0;
+        }
+        .stat-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* miniTab容器样式（补充） */
+        .layuimini-tab {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <!-- 1. 补充miniTab标签页容器 -->
+        <div class="layui-tab layuimini-tab" lay-filter="layuiminiTab" lay-allowclose="true">
+            <ul class="layui-tab-title">
+                <li class="layui-this" lay-id="home">投票广场</li>
+            </ul>
+            <div class="layui-tab-content">
+                <div class="layui-tab-item layui-show">
+                    <!-- 页面标题 -->
+                    <div class="layui-row layui-col-space15" style="margin-bottom: 15px;">
+                        <div class="layui-col-md12">
+                            <h2 style="font-size: 18px; color: #333; font-weight: 500;">投票广场</h2>
+                            <p style="font-size: 12px; color: #666;">发现热门投票，参与话题讨论</p>
+                        </div>
+                    </div>
+
+                    <!-- 快捷操作区 -->
+                    <div class="layui-row layui-col-space15">
+                        <div class="layui-col-md12">
+                            <div class="quick-ops">
+                                <button class="layui-btn layui-btn-normal">
+                                    <i class="fa fa-plus"></i> 发起投票
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 主体内容区：搜索筛选 + 投票列表 + 数据统计 -->
+                    <div class="layui-row layui-col-space15">
+                        <!-- 左侧：搜索筛选 + 投票列表（占比2/3） -->
+                        <div class="layui-col-md8">
+                            <!-- 搜索筛选区 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">
+                                    <i class="fa fa-search icon"></i> 搜索筛选
+                                </div>
+                                <div class="layui-card-body">
+                                    <form class="layui-form layui-form-pane" action="">
+                                        <div class="layui-form-item">
+                                            <div class="layui-inline">
+                                                <label class="layui-form-label">投票标题</label>
+                                                <div class="layui-input-inline" style="width: 180px;">
+                                                    <input type="text" name="title" placeholder="请输入标题关键词" autocomplete="off" class="layui-input">
+                                                </div>
+                                            </div>
+
+                                            <div class="layui-inline">
+                                                <label class="layui-form-label">投票类型</label>
+                                                <div class="layui-input-inline" style="width: 120px;">
+                                                    <select name="type">
+                                                        <option value="">全部类型</option>
+                                                        <option value="daily">日常生活</option>
+                                                        <option value="work">职场工作</option>
+                                                        <option value="study">学习教育</option>
+                                                        <option value="entertainment">娱乐休闲</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="layui-inline">
+                                                <label class="layui-form-label">投票状态</label>
+                                                <div class="layui-input-inline" style="width: 120px;">
+                                                    <select name="status">
+                                                        <option value="">全部状态</option>
+                                                        <option value="running">进行中</option>
+                                                        <option value="ended">已截止</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="layui-inline">
+                                                <button type="submit" class="layui-btn layui-btn-primary" lay-submit lay-filter="data-search-btn">
+                                                    <i class="layui-icon"></i> 搜索
+                                                </button>
+                                                <button type="reset" class="layui-btn layui-btn-primary" style="margin-left: 8px;">
+                                                    <i class="fa fa-refresh"></i> 重置
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- 投票列表区 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">
+                                    <i class="fa fa-list icon"></i> 热门投票
+                                    <span style="font-size: 12px; color: #666; margin-left: 10px;">共 28 个投票</span>
+                                </div>
+                                <div class="layui-card-body" style="padding: 0;">
+                                    <!-- 投票项1：进行中 -->
+                                    <div class="vote-item">
+                                        <div class="vote-header">
+                                            <div class="vote-title">数学会让人脱发吗？程序员亲身验证</div>
+                                            <span class="vote-status status-running">进行中</span>
+                                        </div>
+                                        <div class="vote-meta">
+                                            <span><i class="fa fa-user-o"></i> 发起者：user-0</span>
+                                            <span><i class="fa fa-tag"></i> 类型：日常生活</span>
+                                            <span><i class="fa fa-calendar"></i> 截止：2025-09-07</span>
+                                        </div>
+                                        <div class="vote-footer">
+                                            <div class="vote-stats">
+                                                <i class="fa fa-users"></i> 参与人次：555
+                                            </div>
+                                            <div class="vote-actions">
+                                                <button class="layui-btn layui-btn-xs layui-btn-normal">参与投票</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="1" data-title="数学会让人脱发吗？程序员亲身验证">
+                                                    <i class="fa fa-star-o"></i> 收藏
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 投票项2：进行中 -->
+                                    <div class="vote-item">
+                                        <div class="vote-header">
+                                            <div class="vote-title">2025年最值得入手的办公软件Top5</div>
+                                            <span class="vote-status status-running">进行中</span>
+                                        </div>
+                                        <div class="vote-meta">
+                                            <span><i class="fa fa-user-o"></i> 发起者：user-0</span>
+                                            <span><i class="fa fa-tag"></i> 类型：工作需求</span>
+                                            <span><i class="fa fa-calendar"></i> 截止：2025-09-15</span>
+                                        </div>
+                                        <div class="vote-footer">
+                                            <div class="vote-stats">
+                                                <i class="fa fa-users"></i> 参与人次：1289
+                                            </div>
+                                            <div class="vote-actions">
+                                                <button class="layui-btn layui-btn-xs layui-btn-normal">参与投票</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="2" data-title="2025年最值得入手的办公软件Top5">
+                                                    <i class="fa fa-star-o"></i> 收藏
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 投票项3：已截止 -->
+                                    <div class="vote-item">
+                                        <div class="vote-header">
+                                            <div class="vote-title">夏天最受欢迎的解暑方式是什么？</div>
+                                            <span class="vote-status status-ended">已截止</span>
+                                        </div>
+                                        <div class="vote-meta">
+                                            <span><i class="fa fa-user-o"></i> 发起者：user-2</span>
+                                            <span><i class="fa fa-tag"></i> 类型：日常生活</span>
+                                            <span><i class="fa fa-calendar"></i> 结束：2025-08-30</span>
+                                        </div>
+                                        <div class="vote-footer">
+                                            <div class="vote-stats">
+                                                <i class="fa fa-users"></i> 参与人次：3621
+                                            </div>
+                                            <div class="vote-actions">
+                                                <button class="layui-btn layui-btn-xs layui-btn-primary">查看结果</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="3" data-title="夏天最受欢迎的解暑方式是什么？">
+                                                    <i class="fa fa-star-o"></i> 收藏
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 分页 -->
+                                    <div style="padding: 15px; text-align: center;">
+                                        <div class="layui-box layui-laypage layui-laypage-default" lay-filter="page">
+                                            <a href="javascript:;" class="layui-laypage-prev">上一页</a>
+                                            <span class="layui-laypage-curr"><em class="layui-laypage-em"></em><em>1</em></span>
+                                            <a href="javascript:;">2</a>
+                                            <a href="javascript:;">3</a>
+                                            <a href="javascript:;">4</a>
+                                            <a href="javascript:;">5</a>
+                                            <a href="javascript:;" class="layui-laypage-next">下一页</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：数据统计区（占比1/3） -->
+                        <div class="layui-col-md4">
+                            <!-- 投票数据概览 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">
+                                    <i class="fa fa-bar-chart icon"></i> 投票数据概览
+                                </div>
+                                <div class="layui-card-body">
+                                    <div class="layui-row layui-col-space10">
+                                        <div class="layui-col-xs6">
+                                            <div class="stat-card layui-bg-number">
+                                                <i class="fa fa-pie-chart icon-blue" style="font-size: 20px;"></i>
+                                                <div class="stat-value">28</div>
+                                                <div class="stat-desc">当前投票总数</div>
+                                            </div>
+                                        </div>
+                                        <div class="layui-col-xs6">
+                                            <div class="stat-card layui-bg-number">
+                                                <i class="fa fa-hourglass-half icon-cray" style="font-size: 20px;"></i>
+                                                <div class="stat-value">16</div>
+                                                <div class="stat-desc">进行中投票</div>
+                                            </div>
+                                        </div>
+                                        <div class="layui-col-xs6">
+                                            <div class="stat-card layui-bg-number">
+                                                <i class="fa fa-check-circle icon" style="font-size: 20px;"></i>
+                                                <div class="stat-value">12</div>
+                                                <div class="stat-desc">已截止投票</div>
+                                            </div>
+                                        </div>
+                                        <div class="layui-col-xs6">
+                                            <div class="stat-card layui-bg-number">
+                                                <i class="fa fa-users icon-tip" style="font-size: 20px;"></i>
+                                                <div class="stat-value">5.2万+</div>
+                                                <div class="stat-desc">累计参与人次</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 类型分布图表 -->
+                            <div class="layui-card">
+                                <div class="layui-card-header">
+                                    <i class="fa fa-pie-chart icon"></i> 投票类型分布
+                                </div>
+                                <div class="layui-card-body">
+                                    <div id="type-chart" style="width: 100%; height: 220px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script src="../js/lay-config.js?v=1.0.4" charset="utf-8"></script>
+<script>
+    layui.use(['layer', 'miniTab', 'echarts', 'form'], function () {
+        var $ = layui.jquery,
+            layer = layui.layer,
+            miniTab = layui.miniTab,
+            echarts = layui.echarts,
+            form = layui.form;
+
+        // 初始化miniTab
+        miniTab.render({
+            elem: '#layuiminiTab', // 绑定tab容器
+            homeTitle: '投票广场',  // 首页标题
+            homeUrl: '#'           // 首页路径（当前页）
+        });
+        miniTab.listen();
+
+        // 初始化投票类型分布图表
+        var typeChart = echarts.init(document.getElementById('type-chart'), 'walden');
+        var typeChartOption = {
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 10,
+                top: 20,
+                textStyle: {
+                    fontSize: 12
+                }
+            },
+            series: [
+                {
+                    name: '投票类型分布',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 4,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 14,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: [
+                        {value: 9, name: '日常生活'},
+                        {value: 8, name: '个人爱好'},
+                        {value: 6, name: '旅游风景'},
+                        {value: 5, name: '全球热点'}
+                    ]
+                }
+            ]
+        };
+        typeChart.setOption(typeChartOption);
+
+       
+        window.onresize = function(){
+            typeChart.resize();
+        }
+
+        // 搜索按钮事件 - 添加至少填写一项的校验
+        form.on('submit(data-search-btn)', function (data) {
+            var searchParams = data.field;
+            let hasValue = false;
+            
+            // 检查所有搜索字段
+            for (const key in searchParams) {
+                if (searchParams[key] && searchParams[key].trim() !== '') {
+                    hasValue = true;
+                    break;
+                }
+            }
+            
+            // 如果没有填写任何条件，提示用户
+            if (!hasValue) {
+                layer.msg('请至少填写一项搜索条件', {icon: 2});
+                return false;
+            }
+            
+            // 校验通过，执行搜索
+            layer.msg('搜索参数：' + JSON.stringify(searchParams), {icon: 1});
+            return false;
+        });
+
+        // 投票项操作按钮事件
+        $('.vote-actions').on('click', 'button', function () {
+            var text = $(this).text();
+            var voteTitle = $(this).closest('.vote-item').find('.vote-title').text();
+            
+            if (text === '参与投票') {
+                layer.open({
+                    type: 2,
+                    title: '参与投票：' + voteTitle,
+                    area: ['600px', '400px'],
+                    content: './end.html', // 投票详情页地址
+                    shade: 0.3
+                });
+            } else if (text === '查看结果') {
+                layer.open({
+                    type: 2,
+                    title: '投票结果：' + voteTitle,
+                    area: ['700px', '450px'],
+                    content: './end.html', // 投票结果页地址
+                    shade: 0.3
+                });
+            }
+        });
+
+        // 发起投票按钮事件
+        $('.quick-ops button:eq(0)').on('click', function () {
+            layer.open({
+                type: 2,
+                title: '发起新投票',
+                area: ['700px', '550px'],
+                content: './vote.html', // 发起投票页地址
+                shade: 0.3,
+                btn: ['确认发布', '保存草稿'],
+                yes: function(index, layero) {
+                    layer.msg('投票发布成功！', {icon: 1});
+                    layer.close(index);
+                },
+                btn2: function(index, layero) {
+                    layer.msg('草稿保存成功！', {icon: 1});
+                    layer.close(index);
+                    return false;
+                }
+            });
+        });
+
+        // 投票项收藏按钮事件
+        $('.vote-collect').on('click', function() {
+            var $this = $(this);
+            var voteId = $this.data('id');
+            var voteTitle = $this.data('title');
+            
+            // 检查是否已收藏
+            if ($this.find('i').hasClass('fa-star')) {
+                // 取消收藏
+                $this.find('i').removeClass('fa-star').addClass('fa-star-o');
+                $this.html('<i class="fa fa-star-o"></i> 收藏');
+                layer.msg('已取消收藏：' + voteTitle, {icon: 1});
+            } else {
+                // 收藏
+                $this.find('i').removeClass('fa-star-o').addClass('fa-star');
+                $this.html('<i class="fa fa-star"></i> 已收藏');
+                layer.msg('收藏成功：' + voteTitle, {icon: 1});
+            }
+        });
+    });
+</script>
+</body>
+</html>
+    

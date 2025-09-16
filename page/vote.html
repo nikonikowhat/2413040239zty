@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>投票</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+		<link rel="stylesheet" href="../css/public.css" media="all">
+		<style>
+			/* 选项换行样式 */
+			#options-container {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 10px 20px;
+				padding: 5px 0;
+			}
+			
+			.option-item {
+				margin-bottom: 10px !important;
+				position: relative;
+			}
+			
+			/* 删除按钮样式 */
+			.remove-option {
+				position: absolute;
+				right: -25px;
+				top: 50%;
+				transform: translateY(-50%);
+				color: #FF5722;
+				cursor: pointer;
+				font-size: 16px;
+			}
+			
+			/* 基础表单样式 */
+			.layuimini-main {
+				padding: 30px;
+			}
+			
+			.layui-form-item {
+				margin-bottom: 25px;
+			}
+			
+			.layui-btn-normal {
+				background-color: #1E9FFF;
+			}
+		</style>
+	</head>
+	<div class="layuimini-container">
+	    <div class="layuimini-main">
+	        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+	            <legend>投票设置</legend>
+	        </fieldset>
+	
+	        <form class="layui-form" lay-filter="voteForm" action="">
+	            <div class="layui-form-item">
+	                <label class="layui-form-label">投票标题</label>
+	                <div class="layui-input-block">
+	                    <input type="text" name="title" lay-verify="required" autocomplete="off" placeholder="请输入标题" class="layui-input">
+	                </div>
+	            </div>
+	
+	            <div class="layui-form-item">
+	                <div class="layui-inline">
+	                    <label class="layui-form-label">发布时间</label>
+	                    <div class="layui-input-inline">
+	                        <input type="text" name="start_date" id="start_date" lay-verify="required|checkStartDate" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+	                    </div>
+	                </div>
+	                <div class="layui-inline">
+	                    <label class="layui-form-label">截止时间</label>
+	                    <div class="layui-input-inline">
+	                        <input type="text" name="end_date" id="end_date" lay-verify="required|checkEndDate" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+	                    </div>
+	                </div>
+	            </div>
+	
+	            <div class="layui-form-item">
+	                <div class="layui-inline">
+	                    <label class="layui-form-label">投票类型</label>
+	                    <div class="layui-input-inline">
+	                        <!-- 修复：为select添加ID，便于定位其 Layui 封装后的容器 -->
+	                        <select name="modules" id="voteModule" lay-verify="required" lay-search="">
+	                            <option value="">直接选择或搜索选择</option>
+							   <option value="1">日常生活</option>
+							   <option value="2">新闻热点</option>
+							   <option value="3">旅游风景</option>
+							   <option value="4">天下美食</option>
+							   <option value="5">文艺创作</option>
+							   <option value="6">全球热点</option>
+							   <option value="7">个人爱好</option>
+	                        </select>
+	                    </div>
+	                </div>
+	            </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">投票方式</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="vote_type" value="single" title="单选" checked>
+                        <input type="radio" name="vote_type" value="multiple" title="多选">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">投票选项</label>
+                    <div class="layui-input-block" id="options-container">
+                        <div class="layui-input-inline option-item" style="width: 300px;">
+                            <input type="text" name="options[]" lay-verify="required" autocomplete="off" placeholder="请输入选项内容" class="layui-input">
+                            <i class="layui-icon layui-icon-close remove-option"></i>
+                        </div>
+                        <div class="layui-input-inline option-item" style="width: 300px;">
+                            <input type="text" name="options[]" lay-verify="required" autocomplete="off" placeholder="请输入选项内容" class="layui-input">
+                            <i class="layui-icon layui-icon-close remove-option"></i>
+                        </div>
+                    </div>
+                    <div class="layui-input-block" style="margin-top: 10px;">
+                        <button type="button" class="layui-btn layui-btn-normal" id="add-option">
+                            <i class="layui-icon layui-icon-add-circle"></i> 增加选项
+                        </button>
+                    </div>
+                </div>
+	
+	            <div class="layui-form-item">
+	                <div class="layui-input-block">
+	                    <button class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+	                    <button type="button" class="layui-btn layui-btn-primary" id="saveBtn" lay-filter="save">保存</button>
+	                </div>
+	            </div>
+	        </form>
+	    </div>
+	</div>
+	
+	<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+	<script>
+	    layui.use(['form', 'laydate'], function () {
+	        var form = layui.form
+	            , layer = layui.layer
+	            , laydate = layui.laydate;
+	
+	        // 获取当前日期（实际日期）
+	        var today = new Date();
+	        // 格式化日期为yyyy-MM-dd
+	        var formatToday = today.getFullYear() + '-' + 
+	                         (today.getMonth() + 1).toString().padStart(2, '0') + '-' + 
+	                         today.getDate().toString().padStart(2, '0');
+	
+	        //日期选择器 - 发布时间
+	        laydate.render({
+	            elem: '#start_date',
+	            value: formatToday,
+	            min: formatToday,
+	            theme: '#1E9FFF'
+	        });
+	        
+	        // 截止日期（默认7天后）
+	        var defaultEndDate = new Date();
+	        defaultEndDate.setDate(defaultEndDate.getDate() + 7);
+	        var formatDefaultEndDate = defaultEndDate.getFullYear() + '-' + 
+	                                  (defaultEndDate.getMonth() + 1).toString().padStart(2, '0') + '-' + 
+	                                  defaultEndDate.getDate().toString().padStart(2, '0');
+	        
+	        laydate.render({
+	            elem: '#end_date',
+	            value: formatDefaultEndDate,
+	            min: formatToday,
+	            theme: '#1E9FFF'
+	        });
+	
+	        // 删除选项事件
+	        document.getElementById('options-container').addEventListener('click', function(e) {
+	            if (e.target.classList.contains('remove-option')) {
+	                var optionCount = document.querySelectorAll('#options-container .option-item').length;
+	                if (optionCount <= 2) {
+	                    layer.alert('投票选项不能少于2个', {icon: 2});
+	                    return;
+	                }
+	                e.target.parentElement.remove();
+	            }
+	        });
+	
+	        // 增加选项事件
+	        document.getElementById('add-option').addEventListener('click', function() {
+	            var container = document.getElementById('options-container');
+	            var newOption = document.createElement('div');
+	            newOption.className = 'layui-input-inline option-item';
+	            newOption.style.width = '300px';
+	            newOption.innerHTML = `
+	                <input type="text" name="options[]" lay-verify="required" autocomplete="off" placeholder="请输入选项内容" class="layui-input">
+	                <i class="layui-icon layui-icon-close remove-option"></i>
+	            `;
+	            container.appendChild(newOption);
+	            form.render();
+	        });
+	
+	        // 自定义验证规则
+	        form.verify({
+	            checkStartDate: function(value) {
+	                if (value) {
+	                    var startDate = new Date(value);
+	                    startDate.setHours(0, 0, 0, 0);
+	                    var todayDate = new Date();
+	                    todayDate.setHours(0, 0, 0, 0);
+	                    if (startDate < todayDate) {
+	                        return '发布日期不能早于当前日期';
+	                    }
+	                }
+	            },
+	            
+	            checkEndDate: function(value) {
+	                if (value) {
+	                    var startDateVal = document.getElementsByName('start_date')[0].value;
+	                    if (!startDateVal) return;
+	                    
+	                    var startDate = new Date(startDateVal);
+	                    var endDate = new Date(value);
+	                    startDate.setHours(0, 0, 0, 0);
+	                    endDate.setHours(0, 0, 0, 0);
+	                    
+	                    if (startDate > endDate) {
+	                        return '截止日期不能早于发布日期';
+	                    }
+	                }
+	            }
+	        });
+	
+	        // 辅助函数：获取 Layui 封装后的 select 容器
+	        function getLayuiSelectContainer(originalSelectId) {
+	            var originalSelect = document.getElementById(originalSelectId);
+	            if (!originalSelect) return null;
+	            // Layui 会为 select 生成同级的 .layui-select 容器
+	            return originalSelect.nextElementSibling;
+	        }
+	
+	        // 通用表单验证函数（修复提示位置错误）
+	        function validateForm() {
+	            // 1. 清除残留提示（避免重复提示叠加）
+	            layer.closeAll('tips');
+	            
+	            // 2. 基础验证（每个错误仅提示1次，优先显示第一个错误）
+	            var isBasicValid = true;
+	            var firstErrorEl = null; // 原始错误元素
+	            var firstErrorTarget = null; // 提示指向的目标元素（处理 Layui 封装组件）
+	            var firstErrorMsg = '';
+	            
+	            document.querySelectorAll('[lay-verify]').forEach(function(el) {
+	                if (isBasicValid) { // 仅在未发现错误时继续校验
+	                    var verifyRules = el.getAttribute('lay-verify').split('|');
+	                    verifyRules.forEach(function(rule) {
+	                        if (isBasicValid) {
+	                            // 必填项校验
+	                            if (rule === 'required' && !el.value.trim()) {
+	                                firstErrorEl = el;
+	                                firstErrorMsg = '此项为必填项';
+	                                isBasicValid = false;
+	                            } 
+	                            // 自定义规则校验
+	                            else if (form.verify()[rule]) {
+	                                var result = form.verify()[rule](el.value, el);
+	                                if (result) {
+	                                    firstErrorEl = el;
+	                                    firstErrorMsg = result;
+	                                    isBasicValid = false;
+	                                }
+	                            }
+	                        }
+	                    });
+	                }
+	            });
+	            
+	            // 显示第一个基础错误（修复 select 提示位置）
+	            if (!isBasicValid) {
+	                // 判断错误元素是否为 Layui 封装的 select
+	                if (firstErrorEl.tagName === 'SELECT') {
+	                    // 获取 Layui 生成的可视化 select 容器
+	                    firstErrorTarget = getLayuiSelectContainer(firstErrorEl.id);
+	                    // 若容器存在则指向容器，否则指向原始元素
+	                    if (firstErrorTarget) {
+	                        layer.tips(firstErrorMsg, firstErrorTarget, {tips: 2, time: 3000});
+	                        // 触发 Layui select 的点击事件，模拟聚焦效果
+	                        firstErrorTarget.click();
+	                    } else {
+	                        layer.tips(firstErrorMsg, firstErrorEl, {tips: 2, time: 3000});
+	                    }
+	                } else {
+	                    // 普通输入框正常提示并聚焦
+	                    layer.tips(firstErrorMsg, firstErrorEl, {tips: 2, time: 3000});
+	                    firstErrorEl.focus();
+	                }
+	                return false;
+	            }
+	            
+	            // 3. 选项数量验证（单独弹窗提示，避免与输入框提示叠加）
+	            var optionCount = document.querySelectorAll('#options-container .option-item').length;
+	            if (optionCount < 2) {
+	                layer.alert('投票选项不能少于2个', {icon: 2});
+	                return false;
+	            }
+	            
+	            // 4. 选项内容验证（仅提示第一个空选项，避免多个重复提示）
+	            var hasEmptyOption = false;
+	            var firstEmptyOption = null;
+	            
+	            document.querySelectorAll('#options-container .option-item input').forEach(function(input) {
+	                if (!hasEmptyOption && !input.value.trim()) {
+	                    hasEmptyOption = true;
+	                    firstEmptyOption = input;
+	                }
+	            });
+	            
+	            if (hasEmptyOption) {
+	                layer.tips('选项内容不能为空', firstEmptyOption, {tips: 2, time: 3000});
+	                layer.alert('存在空选项，请填写完整', {icon: 2});
+	                firstEmptyOption.focus();
+	                return false;
+	            }
+	            
+	            return true;
+	        }
+	
+	        // 立即提交按钮事件
+	        form.on('submit(submit)', function () {
+	            if (validateForm()) {
+	                layer.alert('提交成功！', {icon: 1});
+	            }
+	            return false; // 阻止表单默认提交
+	        });
+	
+	        // 保存按钮事件绑定
+	        document.getElementById('saveBtn').addEventListener('click', function() {
+	            if (validateForm()) {
+	                layer.alert('保存成功！', {icon: 1});
+	            }
+	        });
+	    });
+	</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>投票数据</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <!-- 确保外部资源路径正确 -->
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../lib/font-awesome-4.7.0/css/font-awesome.min.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+        .top-panel {
+            border: 1px solid #eceff9;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .top-panel > .layui-card-body{
+            height: 60px;
+        }
+        .top-panel-number{
+            line-height:60px;
+            font-size: 30px;
+            border-right:1px solid #eceff9;
+        }
+        .top-panel-tips{
+            line-height:30px;
+            font-size: 12px
+        }
+        /* 确保图表容器有明确尺寸 */
+        #echarts-records, #echarts-pies, #echarts-dataset, #echarts-channel-trend {
+            width: 100% !important;
+            min-height: 400px !important;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-main">
+    <!-- 顶部核心指标卡片 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-xs12 layui-col-md3">
+            <div class="layui-card top-panel">
+                <div class="layui-card-header">总投票数</div>
+                <div class="layui-card-body">
+                    <div class="layui-row layui-col-space5">
+                        <div class="layui-col-xs9 layui-col-md9 top-panel-number">12,856</div>
+                        <div class="layui-col-xs3 layui-col-md3 top-panel-tips">
+                            比昨天 <a style="color: #1aa094">▲238</a><br>
+                            比七日 <a style="color: #1aa094">▲1,562</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-xs12 layui-col-md3">
+            <div class="layui-card top-panel">
+                <div class="layui-card-header">参与投票人数</div>
+                <div class="layui-card-body">
+                    <div class="layui-row layui-col-space5">
+                        <div class="layui-col-xs9 layui-col-md9 top-panel-number">8,923</div>
+                        <div class="layui-col-xs3 layui-col-md3 top-panel-tips">
+                            比昨天 <a style="color: #1aa094">▲186</a><br>
+                            比七日 <a style="color: #1aa094">▲1,205</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-xs12 layui-col-md3">
+            <div class="layui-card top-panel">
+                <div class="layui-card-header">候选人总数</div>
+                <div class="layui-card-body">
+                    <div class="layui-row layui-col-space5">
+                        <div class="layui-col-xs9 layui-col-md9 top-panel-number">15</div>
+                        <div class="layui-col-xs3 layui-col-md3 top-panel-tips">
+                            比昨天 <a style="color: #999">—</a><br>
+                            比七日 <a style="color: #1aa094">▲3</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-xs12 layui-col-md3">
+            <div class="layui-card top-panel">
+                <div class="layui-card-header">有效投票率</div>
+                <div class="layui-card-body">
+                    <div class="layui-row layui-col-space5">
+                        <div class="layui-col-xs9 layui-col-md9 top-panel-number">96.8%</div>
+                        <div class="layui-col-xs3 layui-col-md3 top-panel-tips">
+                            比昨天 <a style="color: #bd3004">▼0.2%</a><br>
+                            比七日 <a style="color: #1aa094">▲0.5%</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 中间图表区域 -->
+    <div class="layui-row layui-col-space15" style="margin-top: 15px;">
+        <div class="layui-col-xs12 layui-col-md9">
+            <div id="echarts-records" style="background-color:#ffffff;padding: 10px"></div>
+        </div>
+        <div class="layui-col-xs12 layui-col-md3">
+            <div id="echarts-pies" style="background-color:#ffffff;padding: 10px"></div>
+        </div>
+    </div>
+
+    <!-- 底部图表区域 -->
+    <div class="layui-row layui-col-space15" style="margin-top: 15px;">
+        <div class="layui-col-xs12 layui-col-md6">
+            <div id="echarts-dataset" style="background-color:#ffffff;padding: 10px"></div>
+        </div>
+        <div class="layui-col-xs12 layui-col-md6">
+            <div id="echarts-channel-trend" style="background-color:#ffffff;padding: 10px"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 确保资源加载顺序正确 -->
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    // 先确保lay-config加载完成
+    document.write('<script src="../js/lay-config.js?v=1.0.4"><\/script>');
+    
+    // 等待DOM加载完成后初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+        layui.use(['layer', 'echarts'], function () {
+            // 检查echarts是否加载成功
+            if (typeof layui.echarts === 'undefined') {
+                layer.error('ECharts模块加载失败，请检查lay-config配置');
+                return;
+            }
+            
+            var $ = layui.jquery,
+                layer = layui.layer,
+                echarts = layui.echarts;
+
+            // 检查图表容器是否存在
+            var containerIds = ['echarts-records', 'echarts-pies', 'echarts-dataset', 'echarts-channel-trend'];
+            containerIds.forEach(function(id) {
+                if (!document.getElementById(id)) {
+                    layer.error('图表容器不存在: ' + id);
+                }
+            });
+
+            /**
+             * 1. 投票趋势折线图
+             */
+            var echartsRecords = echarts.init(document.getElementById('echarts-records'), 'walden');
+            var optionRecords = {
+                title: {text: '7日投票趋势图'},
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {type: 'cross', label: {backgroundColor: '#6a7985'}},
+                    formatter: function (params) {
+                        let res = params[0].name + '<br/>';
+                        params.forEach(item => res += `${item.seriesName}：${item.value} 票<br/>`);
+                        return res;
+                    }
+                },
+                legend: {data: ['总投票数', '有效投票数', '无效投票数'], top: 30},
+                toolbox: {feature: {saveAsImage: {title: '保存图表'}}},
+                grid: {left: '3%', right: '10%', bottom: '3%', containLabel: true},
+                xAxis: [{type: 'category', boundaryGap: false, data: ['10/01', '10/02', '10/03', '10/04', '10/05', '10/06', '10/07']}],
+                yAxis: [
+                    {type: 'value', name: '总/有效投票数（票）', nameTextStyle: {padding: [0, 0, 0, 10]}},
+                    {type: 'value', name: '无效投票数（票）', nameTextStyle: {padding: [0, 10, 0, 0]}, position: 'right'}
+                ],
+                series: [
+                    {name: '总投票数', type: 'line', yAxisIndex: 0, data: [1156, 1482, 1790, 1578, 2054, 2260, 2536], lineStyle: {color: '#1c84c6'}, symbol: 'circle', symbolSize: 6},
+                    {name: '有效投票数', type: 'line', yAxisIndex: 0, data: [1110, 1430, 1735, 1532, 1998, 2185, 2450], lineStyle: {color: '#1ab394'}, symbol: 'circle', symbolSize: 6},
+                    {name: '无效投票数', type: 'line', yAxisIndex: 1, data: [46, 52, 55, 46, 56, 75, 86], lineStyle: {color: '#f8ac59'}, symbol: 'circle', symbolSize: 6, itemStyle: {color: '#f8ac59'}}
+                ]
+            };
+            // 尝试设置图表配置，捕获可能的错误
+            try {
+                echartsRecords.setOption(optionRecords);
+            } catch (e) {
+                layer.error('图表1初始化失败: ' + e.message);
+            }
+
+            /**
+             * 2. 候选人投票占比玫瑰图
+             */
+            var echartsPies = echarts.init(document.getElementById('echarts-pies'), 'walden');
+            var optionPies = {
+                title: {text: 'Top5候选人投票占比', left: 'center'},
+                tooltip: {trigger: 'item', formatter: '{b} <br/>投票数：{c} 票 <br/>占比：{d}%'},
+                legend: {
+                    orient: 'vertical', left: 'left',
+                    data: ['候选人A', '候选人B', '候选人C', '候选人D', '候选人E'],
+                    formatter: function(name) {return name.length > 6 ? name.substring(0,6)+'...' : name;}
+                },
+                series: [{
+                    name: '投票占比', type: 'pie', radius: '55%', center: ['50%', '60%'], roseType: 'radius',
+                    data: [
+                        {value: 2850, name: '候选人A'},
+                        {value: 2285, name: '候选人B'},
+                        {value: 2098, name: '候选人C'},
+                        {value: 1835, name: '候选人D'},
+                        {value: 1632, name: '候选人E'}
+                    ],
+                    emphasis: {itemStyle: {shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)'}}
+                }]
+            };
+            try {
+                echartsPies.setOption(optionPies);
+            } catch (e) {
+                layer.error('图表2初始化失败: ' + e.message);
+            }
+
+            /**
+             * 3. 投票渠道分布柱状图
+             */
+            var echartsDataset = echarts.init(document.getElementById('echarts-dataset'), 'walden');
+            var channelData = [
+                {channel: 'Web端', '投票数': 3250},
+                {channel: '移动端H5', '投票数': 5860},
+                {channel: '微信小程序', '投票数': 2980},
+                {channel: 'APP端', '投票数': 766}
+            ];
+            var optionDataset = {
+                title: {text: '各投票渠道投票数分布', left: 'left'},
+                tooltip: {trigger: 'axis', formatter: '{b} <br/>{a}：{c} 票'},
+                legend: {top: 30, right: '10%', data: ['投票数']},
+                xAxis: {type: 'category', data: channelData.map(item => item.channel)},
+                yAxis: {name: '投票数（票）', nameTextStyle: {padding: [0, 0, 0, 10]}},
+                series: [{
+                    name: '投票数', type: 'bar',
+                    itemStyle: {
+                        color: function(params) {
+                            var colorList = ['#1ab394', '#23c6c8', '#1c84c6', '#f8ac59'];
+                            return colorList[params.dataIndex];
+                        }
+                    },
+                    data: channelData.map(item => item.投票数)
+                }]
+            };
+            try {
+                echartsDataset.setOption(optionDataset);
+            } catch (e) {
+                layer.error('图表3初始化失败: ' + e.message);
+            }
+
+            /**
+             * 4. 每日投票对比折线图
+             */
+            var echartsChannelTrend = echarts.init(document.getElementById('echarts-channel-trend'), 'walden');
+            var trendData = [
+                ['10/02', 320, 850, 360, 100],
+                ['10/03', 410, 980, 450, 135],
+                ['10/04', 380, 820, 420, 110],
+                ['10/05', 450, 1050, 520, 148],
+                ['10/06', 520, 1280, 480, 165],
+                ['10/07', 680, 1380, 750, 178]
+            ];
+            var optionChannelTrend = {
+                title: {text: '近6日各渠道投票对比', left: 'left'},
+                tooltip: {trigger: 'axis', formatter: '{b} <br/>{a}：{c} 票'},
+                legend: {top: 30, right: '10%', data: ['Web端', '移动端H5', '微信小程序', 'APP端']},
+                xAxis: {type: 'category', data: trendData.map(item => item[0])},
+                yAxis: {name: '投票数（票）', nameTextStyle: {padding: [0, 0, 0, 10]}},
+                series: [
+                    {name: 'Web端', type: 'line', smooth: true, data: trendData.map(item => item[1])},
+                    {name: '移动端H5', type: 'line', smooth: true, data: trendData.map(item => item[2])},
+                    {name: '微信小程序', type: 'line', smooth: true, data: trendData.map(item => item[3])},
+                    {name: 'APP端', type: 'line', smooth: true, data: trendData.map(item => item[4])}
+                ]
+            };
+            try {
+                echartsChannelTrend.setOption(optionChannelTrend);
+            } catch (e) {
+                layer.error('图表4初始化失败: ' + e.message);
+            }
+
+            // 窗口缩放时重绘图表
+            window.onresize = function () {
+                echartsRecords.resize();
+                echartsPies.resize();
+                echartsDataset.resize();
+                echartsChannelTrend.resize();
+            };
+        });
+    });
+</script>
+</body>
+</html>

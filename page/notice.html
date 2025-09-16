@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>投票通知中心</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../css/public.css" media="all">
+    <style>
+        /* 通知状态样式 */
+        .status-unread {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #1e9fff;
+            margin-right: 5px;
+        }
+        .status-read {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #eee;
+            margin-right: 5px;
+        }
+        /* 通知类型图标 */
+        .notify-icon {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #f0f7ff;
+            color: #1e9fff;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .notify-icon-withdraw {
+            background-color: #fff2f0;
+            color: #f5222d;
+        }
+        /* 通知列表项样式 */
+        .notify-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f2f2f2;
+            transition: background-color 0.2s;
+        }
+        .notify-item:hover {
+            background-color: #fafafa;
+        }
+        .notify-content {
+            flex: 1;
+        }
+        .notify-title {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .notify-desc {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        .notify-time {
+            font-size: 12px;
+            color: #999;
+        }
+        .notify-action {
+            margin-left: 15px;
+            display: flex;
+            gap: 5px;
+        }
+        /* 空状态样式 */
+        .empty-notify {
+            text-align: center;
+            padding: 60px 0;
+            color: #999;
+        }
+        .empty-notify i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #eee;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+            <legend><i class="layui-icon layui-icon-bell"></i> 投票通知中心</legend>
+        </fieldset>
+
+        <!-- 通知筛选栏 -->
+        <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">通知状态</label>
+                    <div class="layui-input-inline">
+                        <select name="notifyStatus" lay-filter="notifyStatus">
+                            <option value="">全部通知</option>
+                            <option value="unread">未读通知</option>
+                            <option value="read">已读通知</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">通知类型</label>
+                    <div class="layui-input-inline">
+                        <select name="notifyType" lay-filter="notifyType">
+                            <option value="">全部类型</option>
+                            <option value="end">投票结束</option>
+                            <option value="withdraw">投票撤回</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn layui-btn-primary" lay-submit lay-filter="readAll">
+                        <i class="layui-icon layui-icon-check"></i> 全部已读
+                    </button>
+                </div>
+                
+                <div class="layui-inline">
+                    <button class="layui-btn layui-btn-danger" lay-submit lay-filter="deleteAll">
+                        <i class="layui-icon layui-icon-delete"></i>删除所有通知
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知列表容器 -->
+        <div id="notifyList">
+            <!-- 通知列表由JS动态渲染 -->
+        </div>
+
+        <!-- 分页容器 -->
+        <div id="notifyPage" style="text-align: center; margin-top: 20px;"></div>
+    </div>
+</div>
+
+<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+    layui.use(['form', 'laypage', 'layer'], function () {
+        var form = layui.form,
+            laypage = layui.laypage,
+            layer = layui.layer;
+
+        $.getJSON('../api/notice.json', function(res) {
+            if (res.code !== 0) {
+                layer.msg('加载通知失败', {icon: 2});
+                return;
+            }
+
+            var notifyData = res.data;
+            var currentPage = 1;
+            var pageSize = 10;
+            var filteredData = [...notifyData];
+
+            // 渲染通知列表
+            function renderNotifyList(data, page, size) {
+                var start = (page - 1) * size;
+                var end = start + size;
+                var pageData = data.slice(start, end);
+                var html = '';
+
+                if (pageData.length === 0) {
+                    html = `
+                        <div class="empty-notify">
+                            <i class="layui-icon layui-icon-notice"></i>
+                            <div>暂无通知数据</div>
+                        </div>
+                    `;
+                    $('#notifyList').html(html);
+                    $('#notifyPage').html('');
+                    return;
+                }
+
+                pageData.forEach(item => {
+                    // 类型图标和标题
+                    let iconClass = 'notify-icon';
+                    let icon = 'layui-icon-ok-circle';
+                    let title = '投票结束通知';
+                    if (item.type === 'withdraw') {
+                        iconClass += ' notify-icon-withdraw';
+                        icon = 'layui-icon-close-circle';
+                        title = '投票撤回通知';
+                    }
+
+                    // 状态标识
+                    let statusClass = item.isRead ? 'status-read' : 'status-unread';
+                    // 已读/未读按钮
+                    let readBtn = item.isRead ? 
+                        '' : 
+                        `<button class="layui-btn layui-btn-xs layui-btn-primary" lay-event="markRead" data-id="${item.id}">标记已读</button>`;
+
+                    // 操作按钮
+                    let actionBtn = `
+                        ${readBtn}
+                        <button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete" data-id="${item.id}">删除</button>
+                    `;
+                    
+                    if (item.type === 'end' && !item.isRead) {
+                        actionBtn = `
+                            ${readBtn}
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view" data-id="${item.id}" data-voteId="${item.voteId}">查看结果</button>
+                            <button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete" data-id="${item.id}">删除</button>
+                        `;
+                    } else if (item.type === 'end' && item.isRead) {
+                        actionBtn = `
+                            <button class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view" data-id="${item.id}" data-voteId="${item.voteId}">查看结果</button>
+                            <button class="layui-btn layui-btn-xs layui-btn-danger" lay-event="delete" data-id="${item.id}">删除</button>
+                        `;
+                    }
+
+                    html += `
+                        <div class="notify-item" data-id="${item.id}">
+                            <div class="${iconClass}">
+                                <i class="layui-icon ${icon}"></i>
+                            </div>
+                            <div class="notify-content">
+                                <div class="notify-title">
+                                    <span class="${statusClass}"></span>${title}
+                                </div>
+                                <div class="notify-desc">${item.content}</div>
+                                <div class="notify-time">${item.createTime}</div>
+                            </div>
+                            <div class="notify-action">
+                                ${actionBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $('#notifyList').html(html);
+
+                // 绑定操作事件
+                bindNotifyEvents();
+
+                // 渲染分页
+                laypage.render({
+                    elem: 'notifyPage',
+                    count: data.length,
+                    limit: size,
+                    curr: page,
+                    layout: ['prev', 'page', 'next', 'count'],
+                    jump: function(obj, first) {
+                        if (!first) {
+                            currentPage = obj.curr;
+                            renderNotifyList(data, obj.curr, obj.limit);
+                        }
+                    }
+                });
+            }
+
+            // 绑定通知项操作事件
+            function bindNotifyEvents() {
+                // 标记已读
+                $('[lay-event="markRead"]').on('click', function() {
+                    var notifyId = $(this).data('id');
+                    
+                    // 更新为已读
+                    notifyData.forEach(item => {
+                        if (item.id === notifyId) {
+                            item.isRead = true;
+                        }
+                    });
+                    
+                    filteredData = [...notifyData];
+                    renderNotifyList(filteredData, currentPage, pageSize);
+                    layer.msg('已标记为已读', {icon: 1});
+                });
+                
+                // 查看结果 - 使用弹窗方式打开vote.html
+                $('[lay-event="view"]').on('click', function() {
+                    var notifyId = $(this).data('id');
+                    var voteId = $(this).data('voteId');
+
+                    // 更新为已读
+                    notifyData.forEach(item => {
+                        if (item.id === notifyId) {
+                            item.isRead = true;
+                        }
+                    });
+                    
+                    // 使用layer.open()方法打开投票页面
+                    var index = layer.open({
+                        title: '投票结果',  // 弹窗标题
+                        type: 2,            // 类型为2表示是iframe层，用于加载外部页面
+                        shade: 0.2,         // 遮罩透明度
+                        maxmin: true,       // 允许最大化/最小化
+                        shadeClose: true,   // 点击遮罩层是否关闭弹窗
+                        area: ['100%', '100%'],  // 弹窗大小，占满整个屏幕
+                        content: `./end.html?voteId=${voteId}`,  // 要加载的页面路径，附带voteId参数
+                    });
+                    
+                    // 窗口大小改变时，让弹窗自适应全屏
+                    $(window).on("resize", function () {
+                        layer.full(index);
+                    });
+                    
+                    // 重新渲染列表以更新已读状态
+                    renderNotifyList(filteredData, currentPage, pageSize);
+                });
+
+                // 删除通知
+                $('[lay-event="delete"]').on('click', function() {
+                    var notifyId = $(this).data('id');
+                    layer.confirm('确定删除这条通知吗？', function(index) {
+                        notifyData = notifyData.filter(item => item.id !== notifyId);
+                        filteredData = [...notifyData];
+                        renderNotifyList(filteredData, currentPage, pageSize);
+                        layer.close(index);
+                        layer.msg('通知已删除', {icon: 1});
+                    });
+                });
+            }
+
+            // 筛选事件：通知状态
+            form.on('select(notifyStatus)', function(data) {
+                filteredData = [...notifyData];
+                if (data.value === 'unread') {
+                    filteredData = filteredData.filter(item => !item.isRead);
+                } else if (data.value === 'read') {
+                    filteredData = filteredData.filter(item => item.isRead);
+                }
+                renderNotifyList(filteredData, 1, pageSize);
+            });
+
+            // 筛选事件：通知类型
+            form.on('select(notifyType)', function(data) {
+                filteredData = [...notifyData];
+                if (data.value) {
+                    filteredData = filteredData.filter(item => item.type === data.value);
+                }
+                renderNotifyList(filteredData, 1, pageSize);
+            });
+
+            // 全部已读
+            form.on('submit(readAll)', function() {
+                if (notifyData.length === 0) {
+                    layer.msg('暂无通知可标记', {icon: 2});
+                    return false;
+                }
+
+                notifyData.forEach(item => {
+                    item.isRead = true;
+                });
+                filteredData = [...notifyData];
+                renderNotifyList(filteredData, currentPage, pageSize);
+                layer.msg('全部通知已标记为已读', {icon: 1});
+                return false;
+            });
+
+            // 一键删除所有通知事件
+            form.on('submit(deleteAll)', function() {
+                // 校验：无通知时提示
+                if (notifyData.length === 0) {
+                    layer.msg('暂无通知可删除', {icon: 2});
+                    return false;
+                }
+
+                // 二次确认：防止误操作
+                layer.confirm(
+                    '确定删除所有通知吗？此操作不可撤销！',
+                    {
+                        title: '批量删除确认',
+                        icon: 2, // 警告图标
+                        btn: ['确认删除', '取消'], // 按钮组
+                        btnAlign: 'c' // 按钮居中
+                    },
+                    function(index) {
+                        // 执行删除：清空数据数组
+                        notifyData = [];
+                        filteredData = [...notifyData];
+                        // 重新渲染列表（显示空状态）
+                        renderNotifyList(filteredData, currentPage, pageSize);
+                        // 关闭确认弹窗并提示
+                        layer.close(index);
+                        layer.msg('所有通知已删除', {icon: 1});
+                    },
+                    function(index) {
+                        // 取消删除：关闭弹窗
+                        layer.close(index);
+                    }
+                );
+                return false;
+            });
+
+            // 初始渲染
+            renderNotifyList(filteredData, currentPage, pageSize);
+        });
+    });
+</script>
+</body>
+</html>
