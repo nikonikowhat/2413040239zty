@@ -1,0 +1,79 @@
+{
+  "code": 0,
+  "msg": "通知数据加载成功",
+  "count": 9,
+  "data": [
+    {
+      "id": 1001,
+      "type": "end",
+      "voteId": 3,
+      "content": "您参与的投票【绵山风景区打分】已正式结束，点击可查看完整投票结果及排名。",
+      "createTime": "2025-09-10 09:15:30",
+      "isRead": false
+    },
+    {
+      "id": 1002,
+      "type": "withdraw",
+      "voteId": 6,
+      "content": "您参与的投票【漫威DC能否再创辉煌】因发起者操作已被撤回，相关投票数据已归档。",
+      "createTime": "2025-09-09 15:42:18",
+      "isRead": false
+    },
+    {
+      "id": 1003,
+      "type": "end",
+      "voteId": 4,
+      "content": "您参与的投票【麻婆豆腐要不要放豆腐】投票周期已结束，“必须放豆腐”选项以85%得票率领先。",
+      "createTime": "2025-07-16 11:20:05",
+      "isRead": true
+    },
+    {
+      "id": 1004,
+      "type": "end",
+      "voteId": 5,
+      "content": "您参与的投票【保尔柯察金在哪里真正的死了】已结束，点击查看多数用户的选择及解析。",
+      "createTime": "2025-04-04 10:08:47",
+      "isRead": true
+    },
+    {
+      "id": 1005,
+      "type": "withdraw",
+      "voteId": 8,
+      "content": "您参与的投票【你读过《钢铁是怎样炼成的》吗】已被发起者撤回，感谢您的参与和反馈。",
+      "createTime": "2025-03-03 17:05:22",
+      "isRead": false
+    },
+    {
+      "id": 1006,
+      "type": "end",
+      "voteId": 9,
+      "content": "您参与的投票【南方人吃水果蘸调料吗】已结束，58%的参与者表示“会蘸辣椒盐等调料”。",
+      "createTime": "2025-03-02 14:30:11",
+      "isRead": false
+    },
+    {
+      "id": 1007,
+      "type": "withdraw",
+      "voteId": 7,
+      "content": "您参与的投票【你喜欢CR300BF吗】因内容调整已被撤回，新投票将在后续发布。",
+      "createTime": "2024-08-31 16:20:35",
+      "isRead": true
+    },
+    {
+      "id": 1008,
+      "type": "end",
+      "voteId": 10,
+      "content": "您参与的投票【你的身边出现哈基米梗了吗】已结束，72%的参与者表示“身边频繁出现该梗”。",
+      "createTime": "2024-01-02 08:45:19",
+      "isRead": true
+    },
+    {
+      "id": 1009,
+      "type": "end",
+      "voteId": 12,
+      "content": "您参与的投票【办公室绿植推荐投票】已结束，“绿萝”以高票当选最受欢迎办公室绿植。",
+      "createTime": "2023-09-15 13:10:02",
+      "isRead": false
+    }
+  ]
+}

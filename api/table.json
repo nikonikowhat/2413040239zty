@@ -1,0 +1,107 @@
+{
+  "code": 0,
+  "msg": "",
+  "count": 1000,
+  "data": [
+    {
+      "title": "新生军训了吗",
+      "username": "user-0",
+      "sign": "签名-0",
+      "time": 20250807,
+      "people": 555,
+      "type": "日常生活",
+      "score": 57,
+      "condition": "已截止"
+    },
+    {
+      "title": "九三阅兵哪款武器最让你好奇",
+      "username": "user-1",
+      "sign": "签名-1",
+      "time": 20250809,
+      "people": 315,
+      "type": "新闻热点",
+      "score": 27,
+      "condition": "已截止"
+    },
+    {
+      "title": "南京夫子庙打分",
+      "username": "user-2",
+      "sign": "签名-2",
+      "time": 20250709,
+      "people": 729,
+      "type": "旅游风景",
+      "score": 31,
+      "condition": "已截止"
+    },
+    {
+      "title": "南京美食投票",
+      "username": "user-3",
+      "sign": "签名-3",
+      "time": 20250715,
+      "people": 377,
+      "type": "天下美食",
+      "score": 68,
+      "condition": "已截止"
+    },
+    {
+      "title": "你是否读过四大名著",
+      "username": "user-4",
+      "sign": "签名-4",
+      "time": 20250403,
+      "people": 762,
+      "type": "文艺创作",
+      "score": 6,
+      "condition": "已截止"
+    },
+    {
+      "title": "查理柯克身亡",
+      "username": "user-5",
+      "sign": "签名-5",
+      "time": 20250809,
+      "people": 607,
+      "type": "全球热点",
+      "score": 87,
+      "condition": "已截止"
+    },
+    {
+      "title": "近期出货的模型哪个质量较好",
+      "username": "user-6",
+      "sign": "签名-6",
+      "time": 20250830,
+      "people": 1614,
+      "type": "个人爱好",
+      "score": 34,
+      "condition": "投票中"
+    },
+    {
+      "title": "你读过《钢铁是怎样炼成的》吗",
+      "username": "user-7",
+      "sign": "签名-7",
+      "time": 20250902,
+      "people": 204,
+      "type": "文艺创作",
+      "score": 28,
+      "condition": "投票中"
+    },
+    {
+      "title": "豆腐脑吃甜吃咸",
+      "username": "user-8",
+      "sign": "签名-8",
+      "time": 20250623,
+      "people": 404,
+      "type": "天下美食",
+      "score": 14,
+      "condition": "已截止"
+    },
+    {
+      "title": "课好多",
+      "username": "user-9",
+      "sign": "签名-9",
+      "time": 20250101,
+      "people": 403,
+      "type": "日常生活",
+      "score": 75,
+      "condition": "已截止"
+    }
+  ]
+}

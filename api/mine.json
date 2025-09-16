@@ -1,0 +1,133 @@
+{
+  "code": 0,
+  "msg": "",
+  "count": 1000,
+  "data": [
+    {
+      "title": "数学会让人脱发吗",
+      "username": "user-0",
+      "time": 20250807,
+      "people": 555,
+      "type": "日常生活",
+      "score": 57,
+      "condition": "已撤回"
+    },
+    {
+      "title": "张VV老师是否太超标了",
+      "username": "user-0",
+      "time": 20250809,
+      "people": 315,
+      "type": "新闻热点",
+      "score": 27,
+      "condition": "投票中"
+    },
+    {
+      "title": "绵山风景区打分",
+      "username": "user-0",
+      "time": 20250709,
+      "people": 729,
+      "type": "旅游风景",
+      "score": 31,
+      "condition": "已截止"
+    },
+    {
+      "title": "麻婆豆腐要不要放豆腐",
+      "username": "user-0",
+      "time": 20250715,
+      "people": 377,
+      "type": "天下美食",
+      "score": 68,
+      "condition": "已截止"
+    },
+    {
+      "title": "保尔柯察金在哪里真正的死了",
+      "username": "user-0",
+      "time": 20250403,
+      "people": 762,
+      "type": "文艺创作",
+      "score": 6,
+      "condition": "已截止"
+    },
+    {
+      "title": "漫威DC能否再创辉煌",
+      "username": "user-0",
+      "time": 20250909,
+      "people": 607,
+      "type": "全球热点",
+      "score": 87,
+      "condition": "投票中"
+    },
+    {
+      "title": "你喜欢CR300BF吗",
+      "username": "user-0",
+      "time": 20250830,
+      "people": 1614,
+      "type": "个人爱好",
+      "score": 34,
+	        "condition": "投票中"
+	      },
+	      {
+	        "title": "你读过《钢铁是怎样炼成的》吗",
+	        "username": "user-0",
+	        "time": 20250902,
+	        "people": 204,
+	        "type": "文艺创作",
+	        "score": 28,
+	        "condition": "投票中"
+	      },
+	      {
+	        "title": "南方人吃水果蘸调料吗",
+	        "username": "user-0",
+	        "time": 20250623,
+	        "people": 404,
+	        "type": "天下美食",
+	        "score": 14,
+	        "condition": "已截止"
+	      },
+	      {
+	        "title": "你的身边出现哈基米梗了吗",
+	        "username": "user-0",
+	        "time": 20250101,
+	        "people": 403,
+	        "type": "日常生活",
+	        "score": 75,
+	        "condition": "已截止"
+	      },
+	      {
+	        "title": "2025年度最佳手机评选",
+	        "username": "user-0",
+	        "time": "",
+	        "people": 0,
+	        "type": "个人爱好",
+	        "score": 0,
+	        "condition": "未发布"
+	      },
+	      {
+	        "title": "办公室绿植推荐投票",
+	        "username": "user-0",
+	        "time": "",
+	        "people": 0,
+	        "type": "日常生活",
+	        "score": 0,
+	        "condition": "未发布"
+	      },
+	      {
+	        "title": "城市共享单车使用满意度调查",
+	        "username": "user-0",
+	        "time": 20250720,
+	        "people": 1250,
+	        "type": "日常生活",
+	        "score": 42,
+	        "condition": "已撤回"
+	      },
+	      {
+	        "title": "夏季最受欢迎的解暑方式",
+	        "username": "user-0",
+	        "time": 20250610,
+	        "people": 890,
+	        "type": "日常生活",
+	        "score": 63,
+	        "condition": "已撤回"
+	      }
+	    ]
+	  }
