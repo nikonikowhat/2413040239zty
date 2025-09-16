@@ -212,7 +212,7 @@
                                                 <i class="fa fa-users"></i> 参与人次：555
                                             </div>
                                             <div class="vote-actions">
-                                                <button class="layui-btn layui-btn-xs layui-btn-normal">参与投票</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-normal vote-participate" data-id="1" data-title="数学会让人脱发吗？程序员亲身验证">参与投票</button>
                                                 <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="1" data-title="数学会让人脱发吗？程序员亲身验证">
                                                     <i class="fa fa-star-o"></i> 收藏
                                                 </button>
@@ -236,7 +236,7 @@
                                                 <i class="fa fa-users"></i> 参与人次：1289
                                             </div>
                                             <div class="vote-actions">
-                                                <button class="layui-btn layui-btn-xs layui-btn-normal">参与投票</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-normal vote-participate" data-id="2" data-title="2025年最值得入手的办公软件Top5">参与投票</button>
                                                 <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="2" data-title="2025年最值得入手的办公软件Top5">
                                                     <i class="fa fa-star-o"></i> 收藏
                                                 </button>
@@ -260,7 +260,7 @@
                                                 <i class="fa fa-users"></i> 参与人次：3621
                                             </div>
                                             <div class="vote-actions">
-                                                <button class="layui-btn layui-btn-xs layui-btn-primary">查看结果</button>
+                                                <button class="layui-btn layui-btn-xs layui-btn-primary vote-view-result" data-id="3" data-title="夏天最受欢迎的解暑方式是什么？">查看结果</button>
                                                 <button class="layui-btn layui-btn-xs layui-btn-primary vote-collect" data-id="3" data-title="夏天最受欢迎的解暑方式是什么？">
                                                     <i class="fa fa-star-o"></i> 收藏
                                                 </button>
@@ -439,30 +439,43 @@
             return false;
         });
 
-        // 投票项操作按钮事件
-        $('.vote-actions').on('click', 'button', function () {
-            var text = $(this).text();
-            var voteTitle = $(this).closest('.vote-item').find('.vote-title').text();
+        // 通用弹窗打开方法 - 统一进入.html的方式
+        function openVotePage(voteId, title, actionType) {
+            // 构建标题，区分"参与投票"和"查看结果"
+            const pageTitle = actionType === 'participate' ? `参与投票：${title}` : `投票结果：${title}`;
+            // 构建带参数的URL
+            const targetUrl = `./end.html?voteId=${voteId}&action=${actionType}`;
             
-            if (text === '参与投票') {
-                layer.open({
-                    type: 2,
-                    title: '参与投票：' + voteTitle,
-                    area: ['600px', '400px'],
-                    content: './end.html', // 投票详情页地址
-                    shade: 0.3
-                });
-            } else if (text === '查看结果') {
-                layer.open({
-                    type: 2,
-                    title: '投票结果：' + voteTitle,
-                    area: ['700px', '450px'],
-                    content: './end.html', // 投票结果页地址
-                    shade: 0.3
-                });
-            }
+            // 打开iframe弹窗
+            var index = layer.open({
+                title: pageTitle,
+                type: 2,               // iframe层
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'], // 全屏显示
+                content: targetUrl
+            });
+            
+            // 窗口大小改变时自适应全屏
+            $(window).on("resize", function () {
+                layer.full(index);
+            });
+        }
+
+        // 参与投票按钮事件
+        $('.vote-participate').on('click', function () {
+            const voteId = $(this).data('id');
+            const voteTitle = $(this).data('title');
+            openVotePage(voteId, voteTitle, 'participate');
         });
 
+        // 查看结果按钮事件
+        $('.vote-view-result').on('click', function () {
+            const voteId = $(this).data('id');
+            const voteTitle = $(this).data('title');
+            openVotePage(voteId, voteTitle, 'view');
+        });
 
         // 投票项收藏按钮事件
         $('.vote-collect').on('click', function() {
