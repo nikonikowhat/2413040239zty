@@ -44,7 +44,7 @@
             border-radius: 4px;
             font-size: 12px;
         }
-        /* 弹窗内结果预览样式 */
+        /* 弹窗内结果预览样式（已弃用，保留代码供后续参考） */
         .result-preview {
             padding: 15px;
         }
@@ -117,16 +117,18 @@
 
         <script type="text/html" id="toolbarDemo">
             <div class="layuimini-btn-container">
+                <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="viewResults">查看结果</button>
                 <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 批量删除 </button>
             </div>
         </script>
 
         <table class="layuimini-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
 
-        <!-- 操作列：仅"投票中"状态显示"投票"按钮，新增查看按钮 -->
+        <!-- 操作列：仅"投票中"状态显示"投票"按钮，查看按钮逻辑统一 -->
         <script type="text/html" id="currentTableBar">
             <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="vote" {{#  if(d.condition !== '投票中'){ }}style="display:none"{{#  } }}>投票</a>
             <a class="layui-btn layui-btn-primary layui-btn-xs data-count-view" lay-event="view">查看</a>
+            <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="viewResult" {{#  if(d.condition !== '已截止'){ }}style="display:none"{{#  } }}>查看结果</a>
             <a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete">删除</a>
         </script>
 
@@ -155,7 +157,7 @@
             layer = layui.layer;
 		let tableData;
 		
-		// 模拟投票结果数据（可根据实际接口返回调整）
+		// 模拟投票结果数据（保留供后续扩展，当前"查看"按钮已跳转至vote.html）
 		const voteResults = {
 			1: { // 假设key为投票ID
 				title: "数学会让人脱发吗",
@@ -166,7 +168,6 @@
 					{text: "不确定，看个人体质", votes: 55, rate: 10}
 				]
 			},
-			// 可添加更多投票结果数据
 			2: {
 				title: "示例投票2",
 				total: 320,
@@ -213,7 +214,7 @@
                         return d.condition === '未发布' ? 0 : d.people;
                     }},
                     {field: 'condition', width: 70, title: '状态', templet: '#statusTpl'},
-			        {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
+			        {title: '操作', minWidth: 220, toolbar: '#currentTableBar', align: "center"}
 			    ]],
 			    limits: [10, 15, 20, 25, 50, 100],
 			    limit: 15,
@@ -260,21 +261,42 @@
             return false;
         });
 
+        // 统一弹窗打开方法（支持不同目标页面和标题）
+        function openTargetPage(pageUrl, title, voteId) {
+            // 拼接带voteId参数的URL
+            const targetUrl = `${pageUrl}?voteId=${voteId}`;
+            // 使用layer.open()创建iframe层加载页面
+            var index = layer.open({
+                title: title,       // 弹窗标题（根据按钮类型动态传入）
+                type: 2,            // 类型为2：iframe层（加载外部HTML页面）
+                shade: 0.2,         // 遮罩透明度（半透明）
+                maxmin: true,       // 允许弹窗最大化/最小化
+                shadeClose: true,   // 点击遮罩层可关闭弹窗
+                area: ['100%', '100%'],  // 弹窗尺寸：占满整个屏幕
+                content: targetUrl, // 目标页面路径（含voteId参数）
+            });
+            
+            // 窗口大小改变时，自动调整弹窗为全屏
+            $(window).on("resize", function () {
+                layer.full(index);
+            });
+        }
+
         table.on('toolbar(currentTableFilter)', function (obj) {
-            if (obj.event === 'vote') {  
-                var index = layer.open({
-                    title: '添加用户',
-                    type: 2,
-                    shade: 0.2,
-                    maxmin: true,
-                    shadeClose: true,
-                    area: ['100%', '100%'],
-                    content: '../page/end.html',
-                });
-                $(window).on("resize", function () {
-                    layer.full(index);
-                });
+            if (obj.event === 'viewResults') {  
+                // 工具栏"查看结果"按钮：需选中一条记录
+                var checkStatus = table.checkStatus('currentTableId');
+                var selectedData = checkStatus.data;
+                
+                if (selectedData.length !== 1) {
+                    layer.msg('请选择一条记录查看结果', {icon: 2});
+                    return;
+                }
+                
+                // 调用统一方法打开结果页面（end.html）
+                openTargetPage('../page/end.html', '投票结果', selectedData[0].id);
             } else if (obj.event === 'delete') {  
+                // 批量删除逻辑（保持不变）
                 var checkStatus = table.checkStatus('currentTableId');
                 var selectedData = checkStatus.data;
                 
@@ -297,70 +319,20 @@
         });
 
         table.on('tool(currentTableFilter)', function (obj) {
-            var data = obj.data;
+            var data = obj.data; // 当前行数据（含voteId）
             
             if (obj.event === 'vote') {
-                var index = layer.open({
-                    title: '参与投票',
-                    type: 2,
-                    shade: 0.2,
-                    maxmin:true,
-                    shadeClose: true,
-                    area: ['100%', '100%'],
-                    content: `../page/vote.html`,
-                });
-                $(window).on("resize", function () {
-                    layer.full(index);
-                });
+                // "投票"按钮：打开投票页面（vote.html）
+                openTargetPage('../page/vote.html', '参与投票', data.id);
                 return false;
             } else if (obj.event === 'view') {
-                // 获取当前投票的结果数据（优先用真实ID匹配，无匹配则用默认数据）
-                const resultData = voteResults[data.id] || voteResults[1];
-                
-                // 生成弹窗内容（已撤回状态显示标识）
-                let withdrawTag = data.condition === '已撤回' ? '<span style="color:#949494; margin-left:10px; font-size:12px;">(已撤回)</span>' : '';
-                
-                let content = `
-                    <div class="result-preview">
-                        <h3 style="font-size:16px; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #eee;">
-                            ${resultData.title}${withdrawTag}
-                        </h3>
-                        <p style="margin-bottom:15px; color:#666; font-size:14px;">
-                            参与总人次：<span style="color:#333; font-weight:500;">${resultData.total}</span>
-                        </p>
-                `;
-                
-                // 拼接选项结果
-                resultData.options.forEach(option => {
-                    content += `
-                        <div class="result-item">
-                            <span class="result-text">${option.text}</span>
-                            <div class="result-progress">
-                                <div class="progress-fill" style="width: ${option.rate}%;"></div>
-                            </div>
-                            <span class="result-stats">${option.votes}票 (${option.rate}%)</span>
-                        </div>
-                    `;
-                });
-                
-                content += `
-                        <div style="margin-top:20px; text-align:right;">
-                            <button class="layui-btn layui-btn-primary" onclick="layer.closeAll('page')">关闭</button>
-                            <button class="layui-btn" onclick="window.location.href='./vote.html'">前往详情页</button>
-                        </div>
-                    </div>
-                `;
-
-                // 打开结果弹窗
-                layer.open({
-                    type: 1,
-                    title: `投票详情${withdrawTag}`,
-                    area: ['600px', '400px'],
-                    content: content,
-                    shade: 0.3,
-                    maxmin: true
-                });
+                // "查看"按钮：打开投票详情页（vote.html，与投票按钮共用页面）
+                openTargetPage('../page/vote.html', '投票详情', data.id);
+            } else if (obj.event === 'viewResult') {
+                // "查看结果"按钮：打开结果页面（end.html）
+                openTargetPage('../page/end.html', '投票结果', data.id);
             } else if (obj.event === 'delete') {
+                // 单条删除逻辑（保持不变）
                 layer.confirm('真的删除这条收藏吗？', function (index) {
                     obj.del();
                     tableData = tableData.filter(item => item.id !== data.id);
