@@ -35,7 +35,7 @@
             border-radius: 4px;
             font-size: 12px;
         }
-        /* 新增：已撤回状态样式 */
+        /* 已撤回状态样式 */
         .status-withdrawn {
             display: inline-block;
             padding: 2px 8px;
@@ -73,6 +73,10 @@
             text-align: right;
             color: #666;
         }
+        /* 空字段高亮提示样式 */
+        .layui-form-danger {
+            border-color: #FF5722 !important;
+        }
     </style>
 </head>
 <body>
@@ -82,7 +86,7 @@
         <fieldset class="table-search-fieldset">
             <legend>搜索信息</legend>
             <div style="margin: 10px 10px 10px 10px">
-                <form class="layui-form layui-form-pane" action="">
+                <form class="layui-form layui-form-pane" action="" lay-filter="searchForm">
                     <div class="layui-form-item">
                         <div class="layui-inline">
                             <label class="layui-form-label">投票标题</label>
@@ -108,6 +112,9 @@
                         <div class="layui-inline">
                             <button type="submit" class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-search-btn">
                                 <i class="layui-icon"></i> 搜 索
+                            </button>
+                            <button type="button" class="layui-btn layui-btn-primary" id="reset-btn">
+                                <i class="layui-icon"></i> 重 置
                             </button>
                         </div>
                     </div>
@@ -155,9 +162,9 @@
             layer = layui.layer;
 		let tableData;
 		
-		// 模拟投票结果数据（可根据实际接口返回调整）
+		// 模拟投票结果数据
 		const voteResults = {
-			1: { // 假设key为投票ID
+			1: { 
 				title: "数学会让人脱发吗",
 				total: 555,
 				options: [
@@ -166,7 +173,6 @@
 					{text: "不确定，看个人体质", votes: 55, rate: 10}
 				]
 			},
-			// 可添加更多投票结果数据
 			2: {
 				title: "示例投票2",
 				total: 320,
@@ -177,13 +183,31 @@
 			}
 		};
 
+        // 通用弹窗打开方法
+        function openTargetPage(pageUrl, title, voteId) {
+            const targetUrl = `${pageUrl}?voteId=${voteId}`;
+            
+            var index = layer.open({
+                title: title,
+                type: 2,               // iframe层
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['100%', '100%'],
+                content: targetUrl
+            });
+            
+            // 窗口大小改变时自适应全屏
+            $(window).on("resize", function () {
+                layer.full(index);
+            });
+        }
+
 		$.getJSON('../api/mine.json', function(res) {
 			tableData = res.data.map(item => {
                 if (!item.condition) {
-                    // 20250815之后的视为进行中，之前的视为已截止
                     item.condition = item.time > 20250815 ? '投票中' : '已截止';
                 }
-                // 为每条数据补充默认ID（实际项目应使用接口返回的真实ID）
                 if (!item.id) item.id = Math.floor(Math.random() * 1000);
                 return item;
             });
@@ -202,14 +226,12 @@
 			        {field: 'title', width: 250, title: '投票标题', sort: true},
 			        {field: 'username', width: 80, title: '用户名'},
 			        {field: 'time', width: 120, title: '发布时间', sort: true, templet: function(d){
-                        // 未发布/已撤回状态时显示对应文本
                         if(d.condition === '未发布') return '未知';
                         if(d.condition === '已撤回') return d.time || '已撤回';
                         return d.time || '未知';
                     }},
 			        {field: 'type', width: 120, title: '类型'},
 			        {field: 'people', width: 135, title: '参与人次', sort: true, templet: function(d){
-                        // 未发布状态时参与人次显示"0"，已撤回显示原有数据
                         return d.condition === '未发布' ? 0 : d.people;
                     }},
 			        {field: 'condition', width: 70, title: '状态', templet: '#statusTpl'},
@@ -224,6 +246,27 @@
         
 
         form.on('submit(data-search-btn)', function (data) {
+            const fields = data.field;
+            let hasValue = false;
+
+            for (const key in fields) {
+                if (fields[key] && fields[key].trim() !== '') {
+                    hasValue = true;
+                    break;
+                }
+            }
+
+            if (!hasValue) {
+                layer.msg('请至少填写一项搜索条件', {icon: 2});
+                Object.keys(fields).forEach(key => {
+                    if (!fields[key] || fields[key].trim() === '') {
+                        $(`input[name="${key}"]`).addClass('layui-form-danger');
+                    }
+                });
+                return false;
+            }
+
+            $('input[name]').removeClass('layui-form-danger');
             var result = JSON.stringify(data.field);
             layer.alert(result, {
                 title: '最终的搜索信息'
@@ -239,6 +282,21 @@
             }, 'data');
 
             return false;
+        });
+
+        $('#reset-btn').on('click', function() {
+            form.val('searchForm', {
+                title: '',
+                uploadtime: '',
+                type: ''
+            });
+            $('input[name]').removeClass('layui-form-danger');
+        });
+
+        $('input[name]').on('input', function() {
+            if ($(this).val().trim() !== '') {
+                $(this).removeClass('layui-form-danger');
+            }
         });
 
         table.on('toolbar(currentTableFilter)', function (obj) {
@@ -268,11 +326,8 @@
             var data = obj.data;
             
             if (obj.event === 'withdraw') {
-                // 撤回功能实现：撤回后更新状态为"已撤回"
                 layer.confirm('确定要撤回这条投票吗？', function (index) {
-                    // 更新数据状态
                     data.condition = '已撤回';
-                    // 重新加载表格数据
                     table.reload('currentTableId', {data: tableData});
                     layer.msg('投票已撤回', {icon: 1});
                     layer.close(index);
@@ -284,11 +339,15 @@
                     layer.close(index);
                 });
             } else if (obj.event === 'view') {
-                // 获取当前投票的结果数据（优先用真实ID匹配，无匹配则用默认数据）
+                // 获取当前投票的结果数据
                 const resultData = voteResults[data.id] || voteResults[1];
                 
                 // 生成弹窗内容（已撤回状态显示标识）
-                let withdrawTag = data.condition === '已撤回' ? '<span style="color:#949494; margin-left:10px; font-size:12px;">(已撤回)</span>' : '';
+                let withdrawTag = data.condition === '已撤回' ? 
+                    '<span style="color:#949494; margin-left:10px; font-size:12px;">(已撤回)</span>' : '';
+                
+                // 保存当前投票ID用于跳转
+                const currentVoteId = data.id;
                 
                 let content = `
                     <div class="result-preview">
@@ -316,7 +375,7 @@
                 content += `
                         <div style="margin-top:20px; text-align:right;">
                             <button class="layui-btn layui-btn-primary" onclick="layer.closeAll('page')">关闭</button>
-                            <button class="layui-btn" onclick="window.location.href='./end.html'">前往详情页</button>
+                            <button class="layui-btn" onclick="openEndPage(${currentVoteId})">前往详情页</button>
                         </div>
                     </div>
                 `;
@@ -332,6 +391,14 @@
                 });
             }
         });
+
+        // 全局函数用于弹窗中的按钮调用
+        window.openEndPage = function(voteId) {
+            // 关闭预览弹窗
+            layer.closeAll('page');
+            // 打开end.html详情页
+            openTargetPage('./end.html', '投票详情', voteId);
+        };
 
     });
 </script>
