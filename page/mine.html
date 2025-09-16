@@ -44,35 +44,6 @@
             border-radius: 4px;
             font-size: 12px;
         }
-        /* 弹窗内结果预览样式 */
-        .result-preview {
-            padding: 15px;
-        }
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .result-progress {
-            flex: 1;
-            height: 8px;
-            background-color: #f2f2f2;
-            border-radius: 4px;
-            margin: 0 10px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background-color: #1e9fff;
-            border-radius: 4px;
-        }
-        .result-stats {
-            width: 80px;
-            text-align: right;
-            color: #666;
-        }
         /* 空字段高亮提示样式 */
         .layui-form-danger {
             border-color: #FF5722 !important;
@@ -162,27 +133,6 @@
             layer = layui.layer;
 		let tableData;
 		
-		// 模拟投票结果数据
-		const voteResults = {
-			1: { 
-				title: "数学会让人脱发吗",
-				total: 555,
-				options: [
-					{text: "会，数学难度与发量成反比", votes: 361, rate: 65},
-					{text: "不会，脱发与数学无关", votes: 139, rate: 25},
-					{text: "不确定，看个人体质", votes: 55, rate: 10}
-				]
-			},
-			2: {
-				title: "示例投票2",
-				total: 320,
-				options: [
-					{text: "选项A", votes: 180, rate: 56},
-					{text: "选项B", votes: 140, rate: 44}
-				]
-			}
-		};
-
         // 通用弹窗打开方法
         function openTargetPage(pageUrl, title, voteId) {
             const targetUrl = `${pageUrl}?voteId=${voteId}`;
@@ -339,66 +289,10 @@
                     layer.close(index);
                 });
             } else if (obj.event === 'view') {
-                // 获取当前投票的结果数据
-                const resultData = voteResults[data.id] || voteResults[1];
-                
-                // 生成弹窗内容（已撤回状态显示标识）
-                let withdrawTag = data.condition === '已撤回' ? 
-                    '<span style="color:#949494; margin-left:10px; font-size:12px;">(已撤回)</span>' : '';
-                
-                // 保存当前投票ID用于跳转
-                const currentVoteId = data.id;
-                
-                let content = `
-                    <div class="result-preview">
-                        <h3 style="font-size:16px; margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #eee;">
-                            ${resultData.title}${withdrawTag}
-                        </h3>
-                        <p style="margin-bottom:15px; color:#666; font-size:14px;">
-                            参与总人次：<span style="color:#333; font-weight:500;">${resultData.total}</span>
-                        </p>
-                `;
-                
-                // 拼接选项结果
-                resultData.options.forEach(option => {
-                    content += `
-                        <div class="result-item">
-                            <span class="result-text">${option.text}</span>
-                            <div class="result-progress">
-                                <div class="progress-fill" style="width: ${option.rate}%;"></div>
-                            </div>
-                            <span class="result-stats">${option.votes}票 (${option.rate}%)</span>
-                        </div>
-                    `;
-                });
-                
-                content += `
-                        <div style="margin-top:20px; text-align:right;">
-                            <button class="layui-btn layui-btn-primary" onclick="layer.closeAll('page')">关闭</button>
-                            <button class="layui-btn" onclick="openEndPage(${currentVoteId})">前往详情页</button>
-                        </div>
-                    </div>
-                `;
-
-                // 打开结果弹窗
-                layer.open({
-                    type: 1,
-                    title: `投票详情${withdrawTag}`,
-                    area: ['600px', '400px'],
-                    content: content,
-                    shade: 0.3,
-                    maxmin: true
-                });
+                // 直接进入end.html，不经过预览弹窗
+                openTargetPage('./end.html', '投票详情', data.id);
             }
         });
-
-        // 全局函数用于弹窗中的按钮调用
-        window.openEndPage = function(voteId) {
-            // 关闭预览弹窗
-            layer.closeAll('page');
-            // 打开end.html详情页
-            openTargetPage('./end.html', '投票详情', voteId);
-        };
 
     });
 </script>
